@@ -1,0 +1,567 @@
+/system32/drivers/etc/host
+
+cd /etc/apache2/sites-available
+
+sudo nano test.conf
+
+<VirtualHost *:80>
+    ServerName test2.loc
+    DocumentRoot "/var/www/test2.loc"
+   <Directory "/var/www/test2.loc">
+    AllowOverride All
+    </Directory>
+</VirtualHost>
+
+sudo a2ensite test
+
+sudo service apache2 reload
+
+/////
+git fetch 
+git merge origin/master
+потом добавь изменения и тд
+git add .
+git commit -m "Chto delal"
+
+git push origin redesign
+
+
+//laravel
+cd /etc/apache2/sites-available
+sudo nano test.conf
+
+<VirtualHost *:80>
+    ServerName bloog.loc
+    DocumentRoot "/var/www/bloog.loc/public"
+   <Directory "/var/www/bloog.loc/public">
+    AllowOverride All
+    </Directory>
+</VirtualHost>
+
+sudo a2ensite test
+sudo service apache2 reload
+
+cd /var/www/blog.loc/
+
+composer create-project --prefer-dist laravel/laravel . "5.8.*"
+
+//key
+php artisan key:generate
+
+//создать БД
+
+настройка .env
+
+///////////////////////////
+
+https://laravel.ru/docs/v5/migrations
+
+
+
+
+
+
+////////project blog
+l: admin1@mail.com
+p: asdf
+1) Планитовка структуры таблиц 
+2) routs and controllers (for create remove update delete crud)
+3) установка ларавел
+    пакет 2шт
+    - для генерации сео ссылок
+    composer require cviebrock/eloquent-sluggable:4.8.*
+    + добавить в config/app
+    - для работы с формами
+    composer require 'laravelcollective/html:^5.8.0'
+    + добавить в config/app
+
+4) publib/index.php   die()
+для xdebug.org/wizard.php
+copy 
+для var_dump
+
+//BACKEND
+//МОДЕЛИ + МИГРАЦИИ (-m)
+5)ядро проекта(бизнес логика) совокупность моделей
+Модель - совокупность классов (соедентяються с базой)
+
+    Папка controls - контроллеры
+    Папка resourses - view
+
+php artisan make:model Category
+
+Создадим миграции(для созд табл в базе)
+php artisan make:migration create_categories_tabel --create=categories
+                                                      именно создать
+database/migrations/...
+
+php artisan migrate
+
+Создадим модель с миграцией
+php artisan make:model Tag -m
+php artisan make:model Comment -m
+php artisan make:model Post -m
+php artisan make:model Subscription -m
+
+просто табл. Posts_tags для свази многие ко многим
+  php artisan make:migration create_posts_tags_table --create=post_tags
+
+Перемегрируем табл. пользователей
+php artisan migrate:refresh
+
+6)Создадим связи (ОТНОШЕНИЯ) между табл в Моделях
+В моделях (что у статьи Post есть категория и т.д.)
+public function category()
+    {
+        return $this->hasOne(Category::class);
+        belongsToMany
+        hasMany
+    }
+
+    $post = Post::find(id);
+    $post->category->title;
+
+7) Функцию для slug (пост категория тег)
+используем пакет
+use Cviebrock\EloquentSluggable\Sluggable;
+в классе 
+use Sluggable;
+и метод
+    public function sluggable()
+    {
+        return [
+            'slug' => [
+                'source' => 'title' //поле в табл
+            ]
+        ];
+    }
+
+8) CRUD 
+массово присвоим значения
+вначеле класса 
+protected $fillable = ['title', 'content'];
+в методе
+    public static function add($fields)
+    {
+        $post = new static;
+        //создаем экзкмпляр модели
+        $post->fill($fields);
+        $post->user_id = 1;
+        $post->save();
+
+        return $post;
+    }
+
+9)сохранить картинку
+public function upLoadImage($image)
+ларавел класс и может
+$image->saveAs()
+$image->extension()
+
+удалить картинку
+Storage::delete('uploads/' . $this->image);
+
+переопределить папку uploads
+config/filesystem
+public_path()
+
+10) привязка поста к категориям setCategory
+тегам 
+статус поста
+
+
+11) Модель пользователя User crud + avatar + роль пользователя + бан 
+12) Модель Comments - разрешить комментарий
+12) Модель Subscrible - сохр.майл+ генерация токена
+
+
+//НАТЯЖКА АДМИН ШАБЛОНА
+    //WEBPACK
+    - скопировать в папку resources/admin/ вставляем css+js 
+    - прописать mix styles and js в папке webpack.mix.js
+    - npm install
+    - npm run dev
+    - копируем шрифты mix.copy('от', 'куда')
+
+    - делаем Rout blog.loc/admin (routes/web) (для админ в папке админ)
+    Route::get('/admin', 'Admin\DashboardController@index');
+            переходим   срабатывает Контроллер     метод контроллера
+
+    Создадим Контроллер для данного Роута
+    php artisan make:controller Admin/DashboardController
+
+    - копируем верстку в папку resources/views/admin/ в Файл dashboard.blade.php
+    - подкл сss+js
+    <link rel="stylesheet" href="/css/admin.css">
+    <script src="/js/admin.js"></script>
+    - и выводим return view('admin.dashboard.blade.php');
+
+    - копируем картинки mix.copy('от', 'куда')
+    - изменить пути относительно папки public
+
+    - сделаем лейаут (неизменимые header foorer sidebar)
+    resources/views/admin/ создадим файл layout.black.php
+        вставка тут 
+    @yield('content')
+        что вставляем
+    @extends('admin.layout')
+    @section('content')
+        ...
+    @endsection
+    (через контроллер меняем вставку admin.dashboard2)
+
+////КАТЕГОРИИ натяжка 3 стр.
+    - роуты
+    Route::resource('/admin/categories', 'Admin\CategoriesController');
+    СОЗДАЕТ НАБОР РОУТОВ ПО ПАПКЕ https://prnt.sc/wj3l2w
+    созд.папку resources/views/admin/categories и в нее index.blade.php
+
+    - контроллеры + натянуть
+    в контроллере категории вытащим из базы все наши категории и передадим в вид
+    добавить в контроллер неймспейс категории 
+    use App\Category;
+    $categories = Category::all();
+    return view('admin.categories.index', ['categories' => $categories]);
+                                         обращаемся в виде
+    добавим создание категории в ссылку
+    {{route('categories.create')}}
+    далее нужен метод create в этом контроллере
+
+    подключим create категию
+    также создадим форму с помощью LARAVEL COLLECTIVE
+    {!! Form::open(['route' => 'categories.store']) !!}
+                                обработка тут
+        inputss
+    {!! Form::close() !!}
+    обработка всех запросов
+    public function store(Request $request)
+    {
+        dd($request->all());
+        или только name="title"
+        dd($request->get('title'));
+        ИЛИ
+        CМОТРЕТЬ КОНТРОЛЛЕР КАТЕГОРИИ
+
+    }
+    сделать валидацию поля категории в контроллере
+    и вывести в шаблоне ошибки
+    @if($errors->any())
+        @foreach($errors->all() as $error)
+            <li>{{ $error }}</li>
+        @endforeach
+    @endif
+    вынесем errors в отдельный файл для @include('admin.errors')
+
+    изменение категории в шаблоне cat index роут на edit экшн контроллера
+    сделать запрос в базу
+    $category = Category::find($id);
+
+    в шаблоне edit делаем возможность update (изменить на след шаблоне) создаем форму с method=put(обновить) (post(создать))
+    Cоздадим метод update в контроллере
+
+    Удаление категории с помошью формы, с помошью ссылки мы не можем
+    {{ Form::open(['route' => 'categories.destroy'], $category->id), 'method'=>'delete']) }}
+        <button type="submit"></button>
+    {{ Form::close()}}
+    создадим в контроллере метод Category::find($id)->delete();
+
+    Обьеденим в роуты в Route::group(['prefix'=>'admin', 'namespace'=>'Admin'], function(){
+        старые
+        Route::get('/admin', 'Admin\DashboardController@index');
+        новые
+        oute::get('/', 'DashboardController@index');
+    })
+
+
+
+////ТЕГИ натяжка 3 стр.
+
+    - созд.роут
+    - контроллер  php artisan make:controller Admin/TagsController --resource
+        с флагом --resource который создаст необходимые экшены
+    - создадим папку во views и страницы index.blade.php и т.д.
+    - заполним экшен index для отображения списка тегов и в шаблоне добавим роутинг на edit и форму на delete с экшеном на метод destroy
+    - создаем шаблон create edit 
+    - заполняем контроллеры для index create store edit update delete
+
+////USERS натяжка 3 стр.
+
+    - созд.роут
+    - контроллер php artisan make:controller Admin/UsersController --resource
+    - создадим папку users и в ней шаблоны для админ страниц
+    - заполняем методы index контроллера 
+    - выведем всех пользователей
+    - создадим стр. Добавить
+    - в ней форму добавим name для inputs
+    - заполним метод store (получаем данные с формы добавления юзера)
+    НЕ ЗАБЫТЬ ДОБАВИТЬ В ФОРМУ enctype='multipart/form-data'
+    - в конроллере поработаем с методом add модели User 
+    - добавим аватар с помощью определенного метода $request->file('avatar')
+    ПРОВЕРКА МЕТОДОВ КЛАСА dd(get_class_methods($image));
+    - оставляем старые ввод {{old('name')}}
+    - no-image.png для аватара
+    - для передачи в view в контроллере edit передадим через функцию compact('user') то же что и ['user' => $user]
+    - в edit созд.форму, заполнить value и name
+    - заполним update - сделаем не обновление пароля
+    - создадим метод в модели User - generatePassword()
+    - в методе static мы меням создание пароля - и пароль null а потом запускаем созданые новый метод для генерации
+
+    -Изменение в миграциях make_password_nullable - так же установили пакет  composer require doctrine/dbal
+    - validation email для edit user - игнорируем уникальность для себя но для остальных нет
+
+    - удаление юзера без картинки - вынесем метод для удаления картинки
+
+////POSTS 
+    
+    - созд.роут Route::resource('/posts', 'PostsController');
+    - контроллер php artisan make:controller Admin/PostsController --resource
+    - виды resources/views/admin/posts 
+    - заполняем шаблоны (form, input=name, value={{old('title')}})
+    ВЫВОД select КАТЕГОРИЙ И ТЕГОВ ПАКЕТОМ - LARAVEL COLLECTIVE
+    echo Form::select('size', ['L' => 'Large', 'S' => 'Small'], null, ['placeholder' => 'Pick a size...']);
+    что бы бралось из базы выведем массив из переменной $tags - в контроллере
+    $tags = Tag::pluck('id', 'title')->all();
+        выдернуть только id и title всех тегов
+
+    - контроллер 
+        index - отображение
+        create - отображение
+        store - валидация, обработка, добавление в бд
+        edit - отображение взять id
+        ($post->category->id)
+        update - изменение по id
+        destroy - удаление
+
+    -CARBON для работы с датами
+
+    - вывод категорий в blade через связи
+    {{$post->category->title}}
+    создадим метод в модели и выведем
+    {{$post->getCategoryTitle()}}
+
+    - вывод тегов в blade через связи через метод в модели
+    {{$post->getTagsTitles()}}
+
+    - подключим CKeditor
+
+    - подключим сайдбар админки отдельно @include('admin._sidebar')
+
+
+/////FRONT-END сайта
+    - подключим все через mix в front.js front.css
+    - создадим layout с хедером и футером
+
+    ЗАПОЛНИМ БАЗУ ПОСТАМИ
+    MODEL FACTORY (faker)
+    database/factories/UserFactory.php
+    php artisan tinker - общение на php в консоли
+    в консоли - factory(App\Post::class)->create();
+    
+
+    ВЫВОД ПОСТОВ
+    - с пагинацией
+      в контроллере - $post = Post::paginate(2); + подклней неймспейс use App\Post;
+
+    - для вывода без тегов {!! $post->description !!}
+
+    - вывод даты - создадим метод в модели getDate()
+    return Carbon::createFromFormat('d/m/Y', $this->date)->format('F d, Y');
+
+    - пагинация
+    {{$posts->links()}}
+    можно менять шаблон пагинации
+    php artisan vendor:publish --tag=laravel-pagination
+
+    ВЫВОД ОТДЕЛЬНОГО ПОСТА
+    - роутинг 
+    - метод show контроллера по slug запрос в базу и выведем элемюили ошибку
+    - 404 custom - resources/views/errors
+    - передадим в view (show.blade.php) наш пост
+    - заменим ссылки на посты в index.blade на роуты {{route('post.show', $post->slug)}}
+
+    - пагинация пред./след. пост
+      создадим методы для получения пред./след. постов в модели Post
+
+    - выведем сопутствуещие посты
+      создадим метод related()
+
+    ВЫБОР ПО ТЕГУ ИЛИ КАТЕГОРИИ
+    - роутинг
+    - методы в контроллере для вывода category($slug) и tag($slug)
+      $posts = $tag->posts; для цепочки ниже
+      $posts = $tag->posts()->where('status', 1)->paginate(2);
+    - реализуем метод для проверки категории hasCategory()
+    - прoверка тегов (массив) - count вместо empty -> коллекция
+    - инклюдим куски кода в blade @include('partiels._category', ['post'=> $post])
+
+    САЙДБАР
+    - сохраним код отдельно - @include('pages._sidebar')
+
+    - популярные посты по количеству просмотров
+        ->all() работа на коллекцию ->get() работа с запросом
+    - похожие (по последнему посту на стр)
+    - рекомендуемые
+    - новые
+    - все категории (количество костов в категории по связям)
+
+    - view composer - передавать данные в вид не зависимо где этот вид вызываеться
+    PROVIDERS - app/Providers/AppServiceProvider.php - после загрузки всего но до рендера - в boot() функции Т.Е. козда в boot() где либо @include('pages._sidebar') срабатывает функция которая
+
+    РЕГИСТРАЦИЯ АУТЕНТИФИКАЦИЯ
+    - роут
+    - контроллер для отображения
+    - формы
+      {{csrf_field()}} - для спрятаного инпута с токеном
+    - добавим метод в контроллер register
+
+    ЛОГИН
+    - роут
+    - контроллер с валидацией
+    - проверка пользователя
+      Auth::check(); - залогинен ли
+      Auth::attempt([
+            'email' => $request->get('email'),
+            'password' => $request->get('password')
+        ]);
+    - ФЛЕШ СООБЩЕНИЯ
+    - отображения для загологиненого пользователя в меню
+    - logout (созд.страницу)
+
+    MIDDLEWEARE
+    - скрытие роутов (фильтры роутов через коллбек функцию которая не пропустит)
+      php artisan make:middleware AdminMiddleware
+      подключить его в $routeMiddleware в Kernl.php
+      и вытащим с базы is_admin
+    - создадим доступы к стр. (middleware) к стр.которые зареганы и отдельно которые гости
+
+    СТРАНИЦА ПРОФИЛЯ
+    - роут
+    - контроллер стрр
+    - view /profile
+    - заполним контроллер update профиля
+    - выведем ФЛЕШ сообщение что успешно изменен
+      return redirect()->back()->with('status', 'Profile is update!');
+    - для картинок validation mimes:jpeg,bmp,png и также в форме enctype="multipart/form-data"
+
+    ВЫВОД АВТОРОВ(ПОЛЬЗЫВАТЕЛЕЙ НА ПОСТАХ)
+    {{$post->author->name}}
+
+    КОММЕНТАРИИ
+    - скрытие формы для не залогениных пользователей
+    - роут
+    - контроллер
+      валидация
+      запись в базу
+      вывод сообщения о успешном добавлении
+    - вывод коммитов в шаблоне
+      выввод даты через Carbon {{$comment->created_at->diffForHumans()}}
+      вывод со статусом - Опубликован
+    - создадим отделно метод в модели пост getComments()
+
+    РЕДАКТИРОВАНИЯ КОММЕНТАРИЕВ В АДМИНКЕ
+    - роут для листинга
+    - контроллер для отображения
+    - созд.вид
+    - сделаем переключение одобрения комментариев
+      создадим роут
+      создадим метод в контроллере
+    - удаление комментариев как у тегов, + роут + метод destroy
+    - добавим в админ количество коментариев со статусом не подвержденным
+      через Providers/AppServiceProviders.php - включить переменную в отображение
+
+    ПОДПИСЧИК
+    - форма {{csrf_field()}}
+    - роут
+    - контроллер - валидация 
+    - ОТПРАВКА ПИСЬМА 
+      php artisan make:mail SubscribeEmail
+      создастся папка Mail
+      создадим вид return $this->view('emails.verify'); в папке emails
+      добавим в контроллер отправку
+      \Mail::to($subs)->send(new SubscribeEmail($subs));
+      ИНСТРУМЕНТ ДЛЯ ТЕСТА EMAIL
+      mailtrap
+      письмо с токеном и на контроллер через роут в базе убрать токен на null
+
+    - подписчики адимин
+      - создадим ресурс роут
+      - модель подписчик токен сделать отдельным
+      - удаление
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+//ОТНОШЕНИЯ
+Eloquent - предполагает поиск в Модели User - будет искать в табл. к которой обращаемся user_id
+-----Один к одному
+- Получить запись с номером телефона пользователя.
+модель User
+hasOne('App\Phone')
+будет искать значение id юзера в столбце user_id Phone
+    -обратное отношение со стороны телефона
+- Получить пользователя, владеющего данным телефоном.
+модель Phone
+belongsTo('App\User')
+будет искать связь между user_id в Phone и id
+
+----- Один ко многим
+
+- Получить комментарии статьи блога.
+hasMany('App\Comment')
+
+    -обратное отношение со стороны коментария
+- Получить статью данного комментария.
+belongsTo()
+
+----- Многие ко многим
+3 табл. users, roles и role_user
+role_user - должно иметь user_id и role_id
+belongsToMany()
+-обратное отношение такое же
+belongsToMany()
+User::find($id);
+
+
+
+//методы забрать из базы
+find($id) принимает идентификатор и возвращает одну модель. Если подходящая модель не существует, она возвращает null.
+findOrFail($id) принимает идентификатор и возвращает одну модель. Если подходящая модель не существует, она выдает ошибку.
+first() возвращает первую запись, найденную в базе данных. Если подходящая модель не существует, она возвращает null.
+firstOrFail() возвращает первую запись, найденную в базе данных. Если подходящая модель не существует, она выдает ошибку.
+get() возвращает коллекцию моделей, соответствующих запросу.
+pluck($column) возвращает коллекцию только значений в данном столбце. В предыдущих версиях Laravel этот метод назывался lists.
+toArray() преобразует модель/коллекцию в простой массив PHP.
+
+
+
+
+
+//TO DO 
+- git
+
+- breadcrumbs
+- search
